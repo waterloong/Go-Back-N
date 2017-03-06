@@ -1,9 +1,11 @@
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -149,11 +151,12 @@ public class Sender {
     }
 
     private void createPackets(String fileName) throws Exception {
-        String fileContent = new Scanner(new File(fileName)).useDelimiter("\\Z").next();
+        Path path = Paths.get(fileName);
+        byte[] fileContent = Files.readAllBytes(path);
         int maxDataLength = Packet.MAX_DATA_LENGTH;
-        int length = fileContent.length();
+        int length = fileContent.length;
         for (int offset = 0; offset < length; offset += maxDataLength) {
-            String segment = fileContent.substring(offset, Math.min(offset + maxDataLength, length));
+            byte[] segment = Arrays.copyOfRange(fileContent, offset, Math.min(offset + maxDataLength, length));
             Packet packet = Packet.createPacket(offset / maxDataLength, segment);
             this.packets.add(packet);
         }
