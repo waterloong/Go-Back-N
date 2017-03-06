@@ -58,7 +58,7 @@ public class Sender {
         synchronized (this) {
             while (nextSeqNum + cycles * SEQ_NUM_MODULO < this.numberOfPackets) {
                 //
-                while (nextSeqNum >= base + WINDOW_SIZE || nextSeqNum == SEQ_NUM_MODULO) {
+                while (nextSeqNum >= base + WINDOW_SIZE || nextSeqNum >= SEQ_NUM_MODULO) {
                     wait();
                 }
                 sendPacket(nextSeqNum);
