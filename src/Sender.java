@@ -131,13 +131,22 @@ public class Sender {
                 }
             }
         }
+        System.out.println("Sending EOT");
+
         byte[] eotData = Packet.createEOT(numberOfPackets % SEQ_NUM_MODULO).getUDPdata();
         this.dataDatagramSocket.send(new DatagramPacket(eotData, eotData.length, this.address, this.portForData));
         seqNumWriter.println(numberOfPackets);
         seqNumWriter.close();
         ackWriter.close();
-        System.out.println("Sending EOT");
         dataDatagramSocket.close();
+        byte[] data = new byte[512];
+        DatagramPacket datagramPacket = new DatagramPacket(data, 512);
+        this.ackDatagramSocket.receive(datagramPacket);
+        while (Packet.parseUDPdata(datagramPacket.getData()).getType() != 2) {
+            data = new byte[512];
+            datagramPacket = new DatagramPacket(data, 512);
+            this.ackDatagramSocket.receive(datagramPacket);
+        }
         ackDatagramSocket.close();
         System.exit(0);
     }
