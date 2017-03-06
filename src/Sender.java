@@ -76,6 +76,7 @@ public class Sender {
             @Override
             public void run() {
                 Sender.this.startTimer();
+                System.out.println("time out");
                 for (int i = base; i < nextSeqNum; i ++) {
                     try {
                         Sender.this.sendPacket(i);
