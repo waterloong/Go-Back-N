@@ -1,14 +1,10 @@
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * Created by William on 2017-02-25.
@@ -32,14 +28,14 @@ public class Sender {
 
     private DatagramSocket ackDatagramSocket;
     private DatagramSocket dataDatagramSocket;
-    private Packet[] packets;
+    private List<Packet> packets = new ArrayList<>();
 
     public Sender(InetAddress address, int portForData, int portForAck, String fileName) throws Exception {
         this.dataDatagramSocket = new DatagramSocket(0);
         this.address = address;
         this.portForData = portForData;
         this.ackDatagramSocket = new DatagramSocket(portForAck);
-        this.packets = createPackets(readFile(fileName));
+        createPackets(fileName);
 
         // listen for ACKs
         new Thread(new Runnable() {
@@ -96,7 +92,7 @@ public class Sender {
     }
 
     private void sendPacket(int index) throws IOException {
-        byte[] udpData = packets[index + cycles * 32].getUDPdata();
+        byte[] udpData = packets.get(index + cycles * 32).getUDPdata();
         DatagramPacket datagramPacket = new DatagramPacket(udpData, udpData.length, address, portForData);
         this.dataDatagramSocket.send(datagramPacket);
         seqNumWriter.println(index + cycles * 32);
@@ -152,33 +148,16 @@ public class Sender {
         System.exit(0);
     }
 
-    private Packet[] createPackets(byte[] fileContent) throws Exception {
-        int numberOfWholePackets = fileContent.length / Packet.MAX_DATA_LENGTH;
-        // length of last Packet might be smaller
-        int smallPacketLength =  fileContent.length % Packet.MAX_DATA_LENGTH;
-        this.numberOfPackets = numberOfWholePackets + (smallPacketLength > 0 ? 1 : 0);
-        Packet[] packets = new Packet[numberOfPackets];
-        int offset = 0;
-        int i = 0;
-        for (; i < numberOfWholePackets; i ++) {
-            String data = new String(Arrays.copyOfRange(fileContent, offset, offset + Packet.MAX_DATA_LENGTH), StandardCharsets.UTF_8);
-            packets[i] = Packet.createPacket(i, data);
-            offset += Packet.MAX_DATA_LENGTH;
+    private void createPackets(String fileName) throws Exception {
+        String fileContent = new Scanner(new File(fileName)).useDelimiter("\\Z").next();
+        int maxDataLength = Packet.MAX_DATA_LENGTH;
+        int length = fileContent.length();
+        for (int offset = 0; offset < length; offset += maxDataLength) {
+            String segment = fileContent.substring(offset, Math.min(offset + maxDataLength, length));
+            Packet packet = Packet.createPacket(offset / maxDataLength, segment);
+            this.packets.add(packet);
         }
-        // handle the last small Packet
-        if (smallPacketLength > 0) {
-            packets[i] = Packet.createPacket(i, new String(Arrays.copyOfRange(fileContent, offset, fileContent.length)));
-        }
-        return packets;
-    }
-
-    private static byte[] readFile(String fileName) throws IOException {
-        File file = new File(fileName);
-        FileInputStream fileInputStream = new FileInputStream(file);
-        int byteLength = (int) file.length();
-        byte[] fileContent = new byte[byteLength];
-        fileInputStream.read(fileContent,0, byteLength);
-        return fileContent;
+        this.numberOfPackets = this.packets.size();
     }
 
     /**

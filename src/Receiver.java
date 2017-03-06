@@ -3,6 +3,7 @@ import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by William on 2017-02-26.
@@ -47,7 +48,7 @@ public class Receiver {
                 expectedSeqNum = (expectedSeqNum + 1) % Packet.SEQ_NUM_MODULO;
                 sendAck(seqNum);
                 lastCorrectSeqNum = seqNum;
-                fileWriter.write(packet.getData());
+                fileWriter.write(new String(packet.getData()).getBytes(StandardCharsets.UTF_8));
             } else if (lastCorrectSeqNum > -1) { // send last correct ack iff it exists
                 //  // expectedSeqNum - 1 but also work for case of 0
                 sendAck(lastCorrectSeqNum);

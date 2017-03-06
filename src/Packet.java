@@ -1,6 +1,7 @@
 // common packet class used by both SENDER and RECEIVER
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class Packet {
 	
@@ -64,7 +65,7 @@ public class Packet {
 		buffer.putInt(type);
         buffer.putInt(seqnum);
         buffer.putInt(data.length());
-        buffer.put(data.getBytes(),0,data.length());
+        buffer.put(data.getBytes(StandardCharsets.UTF_8),0,data.length());
 		return buffer.array();
 	}
 	
