@@ -97,7 +97,7 @@ public class Sender {
     }
 
     public void waitForAck() throws Exception {
-        while (base < this.numberOfPackets - 1) {
+        while (base < this.numberOfPackets) {
             byte[] data = new byte[512];
             DatagramPacket datagramPacket = new DatagramPacket(data, 512);
             this.ackDatagramSocket.receive(datagramPacket);
