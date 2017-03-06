@@ -18,7 +18,7 @@ public class Sender {
     private PrintWriter ackWriter = new PrintWriter("ack.log");
 
     public static final int WINDOW_SIZE = 10;
-    public static final int TIME_OUT = 618; // magic number
+    public static final int TIME_OUT = 1000; // magic number
     private int numberOfPackets;
     private volatile int base = 0;
     private volatile int nextSeqNum = 0;
@@ -36,7 +36,6 @@ public class Sender {
         this.address = address;
         this.portForData = portForData;
         this.ackDatagramSocket = new DatagramSocket(portForAck);
-        this.ackDatagramSocket.setSoTimeout(TIME_OUT);
         this.packets = createPackets(readFile(fileName));
         this.startTimer();
 
