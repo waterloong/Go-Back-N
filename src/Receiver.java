@@ -72,8 +72,8 @@ public class Receiver {
                 throw new IllegalArgumentException("Incorrect number of arguments");
             }
             InetAddress address = InetAddress.getByName(args[0]);
-            int portForData = Integer.parseInt(args[1]);
-            int portForAck = Integer.parseInt(args[2]);
+            int portForAck = Integer.parseInt(args[1]);
+            int portForData = Integer.parseInt(args[2]);
             String fileName = args[3];
             new Receiver(address, portForAck, portForData, fileName);
         } catch (IllegalArgumentException e) {
