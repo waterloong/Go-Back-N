@@ -22,7 +22,7 @@ public class Sender {
     private int numberOfPackets;
     private volatile int base = 0;
     private volatile int nextSeqNum = 0;
-    private Timer timer = new Timer();
+    private Timer timer = new Timer(true); // we want to stop timer once other threads exit
 
     private InetAddress address;
     private int portForData;
@@ -37,7 +37,6 @@ public class Sender {
         this.portForData = portForData;
         this.ackDatagramSocket = new DatagramSocket(portForAck);
         this.packets = createPackets(readFile(fileName));
-        this.startTimer();
 
         // listen for ACKs
         new Thread(new Runnable() {
@@ -51,9 +50,10 @@ public class Sender {
             }
         }).start();
 
+        this.startTimer();
         // send the data
         synchronized (this) {
-            while (base < this.numberOfPackets - 1) {
+            while (nextSeqNum < this.numberOfPackets) {
                 while (nextSeqNum >= base + WINDOW_SIZE) {
                     wait();
                 }
@@ -69,6 +69,7 @@ public class Sender {
     private void stopTimer() {
         this.timer.cancel();
         this.timer.purge();
+        this.timer = new Timer(true);
     }
 
     private void startTimer() {

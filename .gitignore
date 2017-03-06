@@ -2,3 +2,5 @@
 .idea
 *.pdf
 *.iml
+*.log
+out
