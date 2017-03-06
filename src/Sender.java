@@ -98,7 +98,7 @@ public class Sender {
     }
 
     public void waitForAck() throws Exception {
-        while (base < this.numberOfPackets) {
+        while (true) {
             byte[] data = new byte[512];
             DatagramPacket datagramPacket = new DatagramPacket(data, 512);
             this.ackDatagramSocket.receive(datagramPacket);
@@ -107,7 +107,9 @@ public class Sender {
                 base = ackPacket.getSeqNum();
                 System.out.println("Confirmed: " + base);
                 ackWriter.println(base);
-                if (base == nextSeqNum) {
+                if (base == this.numberOfPackets - 1) {
+                    break;
+                } else if (base == nextSeqNum) {
                     startTimer();
                 } else {
                     stopTimer();
