@@ -17,6 +17,7 @@ public class Receiver {
     private int expectedSeqNum = 0;
     private final DatagramSocket ackDatagramSocket;
     private DatagramSocket dataDatagramSocket;
+    private int lastCorrectSeqNum = -1;
 
     public Receiver(InetAddress address, int portForAck, int portForData, String fileName) throws Exception {
         this.fileWriter = new FileOutputStream(fileName);
@@ -45,10 +46,11 @@ public class Receiver {
             if (expectedSeqNum == seqNum) {
                 expectedSeqNum = (expectedSeqNum + 1) % Packet.SEQ_NUM_MODULO;
                 sendAck(seqNum);
+                lastCorrectSeqNum = seqNum;
                 fileWriter.write(packet.getData());
-            } else if (expectedSeqNum > 0) { // send last correct ack iff it exists
+            } else if (lastCorrectSeqNum > -1) { // send last correct ack iff it exists
                 //  // expectedSeqNum - 1 but also work for case of 0
-                sendAck((expectedSeqNum + 31) % Packet.SEQ_NUM_MODULO);
+                sendAck(lastCorrectSeqNum);
             }
         }
 

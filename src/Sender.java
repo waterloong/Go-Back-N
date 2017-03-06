@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -160,7 +161,7 @@ public class Sender {
         int offset = 0;
         int i = 0;
         for (; i < numberOfWholePackets; i ++) {
-            String data = new String(Arrays.copyOfRange(fileContent, offset, offset + Packet.MAX_DATA_LENGTH));
+            String data = new String(Arrays.copyOfRange(fileContent, offset, offset + Packet.MAX_DATA_LENGTH), StandardCharsets.UTF_8);
             packets[i] = Packet.createPacket(i, data);
             offset += Packet.MAX_DATA_LENGTH;
         }
