@@ -70,14 +70,13 @@ public class Sender {
     private void stopTimer() {
         this.timer.cancel();
         this.timer.purge();
-        this.timer = new Timer(true);
+        this.timer = new Timer();
     }
 
     private void startTimer() {
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Sender.this.startTimer();
                 System.out.println("time out");
                 for (int i = base; i < nextSeqNum; i ++) {
                     try {
@@ -86,6 +85,8 @@ public class Sender {
                         e.printStackTrace();
                     }
                 }
+                Sender.this.timer = new Timer();
+                Sender.this.startTimer();
             }
         }, TIME_OUT);
     }
@@ -105,11 +106,11 @@ public class Sender {
             this.ackDatagramSocket.receive(datagramPacket);
             Packet ackPacket = Packet.parseUDPdata(datagramPacket.getData());
             synchronized (this) {
-                if (ackPacket.getSeqNum() > base) {// discard duplicates
+                if (ackPacket.getSeqNum() >= base) {// discard duplicates
                     base = ackPacket.getSeqNum() + 1;
-                    System.out.println("Confirmed: " + base);
-                    ackWriter.println(base);
-                    if (base == this.numberOfPackets - 1) {
+                    System.out.println("Confirmed: " + ackPacket.getSeqNum());
+                    ackWriter.println(ackPacket.getSeqNum());
+                    if (base == this.numberOfPackets) {
                         break;
                     } else if (base == nextSeqNum) {
                         stopTimer();
