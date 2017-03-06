@@ -2,6 +2,9 @@
 
 import java.nio.ByteBuffer;
 
+/**
+ * This class has been changed significantly. The type of field "data" has been migrated to byte[].
+ */
 public class Packet {
 	
 	// constants
@@ -11,24 +14,26 @@ public class Packet {
 	// data members
 	private int type;
 	private int seqnum;
-	private byte[] data;
+	private byte[] data = new byte[0];
 	
 	//////////////////////// CONSTRUCTORS //////////////////////////////////////////
 	
 	// hidden constructor to prevent creation of invalid packets
 	private Packet(int type, int seqNum, byte[] data) throws Exception {
 		// if data seqment larger than allowed, then throw exception
-		if (data.length > MAX_DATA_LENGTH)
+		if (data != null && data.length > MAX_DATA_LENGTH)
 			throw new Exception("data too large (max 500 chars)");
 			
 		this.type = type;
 		this.seqnum = seqNum % SEQ_NUM_MODULO;
-		this.data = data;
+		if (data != null) {
+            this.data = data;
+        }
 	}
 	
 	// special Packet constructors to be used in place of hidden constructor
 	public static Packet createACK(int SeqNum) throws Exception {
-		return new Packet(0, SeqNum, null);
+		return new Packet(0, SeqNum, new byte[0]);
 	}
 	
 	public static Packet createPacket(int SeqNum, byte[] data) throws Exception {
@@ -36,7 +41,7 @@ public class Packet {
 	}
 	
 	public static Packet createEOT(int SeqNum) throws Exception {
-		return new Packet(2, SeqNum, null);
+		return new Packet(2, SeqNum, new byte[0]);
 	}
 	
 	///////////////////////// PACKET DATA //////////////////////////////////////////
