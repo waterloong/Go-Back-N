@@ -54,7 +54,7 @@ public class Sender {
 
         // send the data
         synchronized (this) {
-            while (true) {
+            while (base < this.numberOfPackets - 1) {
                 while (nextSeqNum >= base + WINDOW_SIZE) {
                     wait();
                 }
