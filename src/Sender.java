@@ -59,6 +59,7 @@ public class Sender {
                 }
                 sendPacket(nextSeqNum);
                 if (base == nextSeqNum) {
+                    stopTimer();
                     startTimer();
                     nextSeqNum ++;
                 }
@@ -110,6 +111,7 @@ public class Sender {
                 if (base == this.numberOfPackets - 1) {
                     break;
                 } else if (base == nextSeqNum) {
+                    stopTimer();
                     startTimer();
                 } else {
                     stopTimer();

@@ -45,7 +45,7 @@ public class Receiver {
                 expectedSeqNum ++;
                 sendAck(seqNum);
                 fileWriter.write(packet.getData());
-            } else {
+            } else if (expectedSeqNum > 0) { // only send last correct ack if it exists
                 // wrong seq num, resend last correct ack
                 sendAck(expectedSeqNum - 1);
             }
