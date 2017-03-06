@@ -34,11 +34,12 @@ public class Receiver {
             logWriter.println(seqNum);
             System.out.println("received: " + seqNum);
 
-            // EOT packet, we are done
+            // EOT Packet, we are done
             if (packet.getType() == 2) {
                 logWriter.close();
                 fileWriter.close();
                 System.out.println("EOT received");
+                sendEot(expectedSeqNum + 1);
                 break;
             }
             if (expectedSeqNum == seqNum) {
@@ -53,9 +54,17 @@ public class Receiver {
 
     }
 
+    private void sendEot(int seqNum) throws Exception {
+        Packet packet = Packet.createEOT(seqNum);
+        byte[] data = packet.getUDPdata();
+        DatagramPacket datagramPacket = new DatagramPacket(data, data.length, address, portForAck);
+        ackDatagramSocket.send(datagramPacket);
+        System.out.println("sent eot: " + seqNum);
+    }
+
     private void sendAck(int seqNum) throws Exception {
         Packet packet = Packet.createACK(seqNum);
-        byte[] data = packet.getData();
+        byte[] data = packet.getUDPdata();
         DatagramPacket datagramPacket = new DatagramPacket(data, data.length, address, portForAck);
         ackDatagramSocket.send(datagramPacket);
         System.out.println("sent ack: " + seqNum);

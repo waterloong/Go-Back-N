@@ -136,7 +136,7 @@ public class Sender {
 
     private Packet[] createPackets(byte[] fileContent) throws Exception {
         int numberOfWholePackets = fileContent.length / Packet.maxDataLength;
-        // length of last packet might be smaller
+        // length of last Packet might be smaller
         int smallPacketLength =  fileContent.length % Packet.maxDataLength;
         this.numberOfPackets = numberOfWholePackets + (smallPacketLength > 0 ? 1 : 0);
         Packet[] packets = new Packet[numberOfPackets];
@@ -147,7 +147,7 @@ public class Sender {
             packets[i] = Packet.createPacket(i, data);
             offset += Packet.maxDataLength;
         }
-        // handle the last small packet
+        // handle the last small Packet
         if (smallPacketLength > 0) {
             packets[i] = Packet.createPacket(i, new String(Arrays.copyOfRange(fileContent, offset, fileContent.length)));
         }
