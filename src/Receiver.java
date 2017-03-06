@@ -30,15 +30,17 @@ public class Receiver {
             DatagramPacket datagramPacket = new DatagramPacket(rawData, 512);
             dataDatagramSocket.receive(datagramPacket);
             Packet packet = Packet.parseUDPdata(datagramPacket.getData());
+            int seqNum = packet.getSeqNum();
+            logWriter.println(seqNum);
+            System.out.println("received: " + seqNum);
 
             // EOT packet, we are done
             if (packet.getType() == 2) {
                 logWriter.close();
                 fileWriter.close();
+                System.out.println("EOT received");
                 break;
             }
-            int seqNum = packet.getSeqNum();
-            logWriter.println(seqNum);
             if (expectedSeqNum == seqNum) {
                 expectedSeqNum ++;
                 sendAck(seqNum);

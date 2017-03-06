@@ -93,6 +93,7 @@ public class Sender {
         DatagramPacket datagramPacket = new DatagramPacket(udpData, udpData.length, address, portForData);
         this.dataDatagramSocket.send(datagramPacket);
         seqNumWriter.println(index);
+        System.out.println("Sending " + index);
     }
 
     public void waitForAck() throws Exception {
@@ -103,6 +104,7 @@ public class Sender {
             Packet ackPacket = Packet.parseUDPdata(datagramPacket.getData());
             synchronized (this) {
                 base = ackPacket.getSeqNum();
+                System.out.println("Confirmed: " + base);
                 ackWriter.println(base);
                 if (base == nextSeqNum) {
                     startTimer();
@@ -118,6 +120,7 @@ public class Sender {
         seqNumWriter.println(numberOfPackets);
         seqNumWriter.close();
         ackWriter.close();
+        System.out.println("Sending EOT");
         dataDatagramSocket.close();
         ackDatagramSocket.close();
         System.exit(0);
