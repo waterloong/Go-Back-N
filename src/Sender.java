@@ -92,10 +92,11 @@ public class Sender {
         byte[] udpData = packets[index].getUDPdata();
         DatagramPacket datagramPacket = new DatagramPacket(udpData, udpData.length, address, portForData);
         this.dataDatagramSocket.send(datagramPacket);
+        seqNumWriter.println(index);
     }
 
     public void waitForAck() throws Exception {
-        while (base < this.numberOfPackets - 1) {;
+        while (base < this.numberOfPackets - 1) {
             byte[] data = new byte[512];
             DatagramPacket datagramPacket = new DatagramPacket(data, 512);
             this.ackDatagramSocket.receive(datagramPacket);
@@ -112,9 +113,9 @@ public class Sender {
                 notify();
             }
         }
-        byte[] eotData = Packet.createEOT(nextSeqNum).getUDPdata();
+        byte[] eotData = Packet.createEOT(numberOfPackets).getUDPdata();
         this.dataDatagramSocket.send(new DatagramPacket(eotData, eotData.length, this.address, this.portForData));
-        seqNumWriter.println(nextSeqNum);
+        seqNumWriter.println(numberOfPackets);
         seqNumWriter.close();
         ackWriter.close();
         dataDatagramSocket.close();
