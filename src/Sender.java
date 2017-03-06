@@ -110,7 +110,7 @@ public class Sender {
             this.ackDatagramSocket.receive(datagramPacket);
             Packet ackPacket = Packet.parseUDPdata(datagramPacket.getData());
             synchronized (this) {
-                if (ackPacket.getSeqNum() >= base) {// discard duplicates
+                if (ackPacket.getSeqNum() >= base && base + WINDOW_SIZE > ackPacket.getSeqNum()) {// discard duplicates
                     base = ackPacket.getSeqNum() + 1;
                     if (ackPacket.getSeqNum() == SEQ_NUM_MODULO - 1) {
                         this.cycles ++;
