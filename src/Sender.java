@@ -17,8 +17,8 @@ public class Sender {
     private PrintWriter seqNumWriter = new PrintWriter("seqnum.log");
     private PrintWriter ackWriter = new PrintWriter("ack.log");
 
-    public static final int WINDOW_SIZE = 10;
-    public static final int TIME_OUT = 1000; // magic number
+    private static final int WINDOW_SIZE = 10;
+    private static final int TIME_OUT = 1000; // magic number
     private int numberOfPackets;
     private volatile int base = 0;
     private volatile int nextSeqNum = 0;
@@ -50,6 +50,7 @@ public class Sender {
             }
         }).start();
 
+        this.startTimer();
         // send the data
         synchronized (this) {
             while (nextSeqNum < this.numberOfPackets) {
@@ -97,26 +98,28 @@ public class Sender {
         System.out.println("Sending " + index);
     }
 
-    public void waitForAck() throws Exception {
+    private void waitForAck() throws Exception {
         while (true) {
             byte[] data = new byte[512];
             DatagramPacket datagramPacket = new DatagramPacket(data, 512);
             this.ackDatagramSocket.receive(datagramPacket);
             Packet ackPacket = Packet.parseUDPdata(datagramPacket.getData());
             synchronized (this) {
-                base = ackPacket.getSeqNum();
-                System.out.println("Confirmed: " + base);
-                ackWriter.println(base);
-                if (base == this.numberOfPackets - 1) {
-                    break;
-                } else if (base == nextSeqNum) {
-                    stopTimer();
-                    startTimer();
-                } else {
-                    stopTimer();
+                if (ackPacket.getSeqNum() > base) {// discard duplicates
+                    base = ackPacket.getSeqNum();
+                    System.out.println("Confirmed: " + base);
+                    ackWriter.println(base);
+                    if (base == this.numberOfPackets - 1) {
+                        break;
+                    } else if (base == nextSeqNum) {
+                        stopTimer();
+                        startTimer();
+                    } else {
+                        stopTimer();
+                    }
+                    // to let thread sending data know that new "blue" seq numbers are available
+                    notify();
                 }
-                // to let thread sending data know that new "blue" seq number are available
-                notify();
             }
         }
         byte[] eotData = Packet.createEOT(numberOfPackets).getUDPdata();
@@ -130,7 +133,7 @@ public class Sender {
         System.exit(0);
     }
 
-    public Packet[] createPackets(byte[] fileContent) throws Exception {
+    private Packet[] createPackets(byte[] fileContent) throws Exception {
         int numberOfWholePackets = fileContent.length / Packet.maxDataLength;
         // length of last packet might be smaller
         int smallPacketLength =  fileContent.length % Packet.maxDataLength;
@@ -150,7 +153,7 @@ public class Sender {
         return packets;
     }
 
-    public static byte[] readFile(String fileName) throws IOException {
+    private static byte[] readFile(String fileName) throws IOException {
         File file = new File(fileName);
         FileInputStream fileInputStream = new FileInputStream(file);
         int byteLength = (int) file.length();
