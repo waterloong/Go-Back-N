@@ -9,9 +9,9 @@ import java.net.InetAddress;
  */
 public class Receiver {
 
+    public static final int SEQ_NUM_MODULO = Packet.SEQ_NUM_MODULO;
     private PrintWriter logWriter = new PrintWriter("arrival.log");
     private FileOutputStream fileWriter;
-//    private StringBuilder fileBuffer = new StringBuilder();
     private final InetAddress address;
     private final int portForAck;
     private int expectedSeqNum = 0;
@@ -39,16 +39,16 @@ public class Receiver {
                 logWriter.close();
                 fileWriter.close();
                 System.out.println("EOT received");
-                sendEot(expectedSeqNum + 1);
+                sendEot((expectedSeqNum + 1) % SEQ_NUM_MODULO);
                 break;
             }
             if (expectedSeqNum == seqNum) {
-                expectedSeqNum ++;
+                expectedSeqNum = (expectedSeqNum + 1) % Packet.SEQ_NUM_MODULO;
                 sendAck(seqNum);
                 fileWriter.write(packet.getData());
-            } else if (expectedSeqNum > 0) { // only send last correct ack if it exists
-                // wrong seq num, resend last correct ack
-                sendAck(expectedSeqNum - 1);
+            } else if (expectedSeqNum > 0) { // send last correct ack iff it exists
+                //  // expectedSeqNum - 1 but also work for case of 0
+                sendAck((expectedSeqNum + 31) % Packet.SEQ_NUM_MODULO);
             }
         }
 

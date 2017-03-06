@@ -14,6 +14,7 @@ import java.util.TimerTask;
  */
 public class Sender {
 
+    public static final int SEQ_NUM_MODULO = Packet.SEQ_NUM_MODULO;
     private PrintWriter seqNumWriter = new PrintWriter("seqnum.log");
     private PrintWriter ackWriter = new PrintWriter("ack.log");
 
@@ -22,7 +23,8 @@ public class Sender {
     private int numberOfPackets;
     private volatile int base = 0;
     private volatile int nextSeqNum = 0;
-    private Timer timer = new Timer(true); // we want to stop timer once other threads exit
+    private volatile int cycles = 0;
+    private Timer timer = new Timer(); // cannot be daemon because it creates new timer
 
     private InetAddress address;
     private int portForData;
@@ -54,7 +56,8 @@ public class Sender {
         // send the data
         synchronized (this) {
             while (nextSeqNum < this.numberOfPackets) {
-                while (nextSeqNum >= base + WINDOW_SIZE) {
+                //
+                while (nextSeqNum >= base + WINDOW_SIZE || nextSeqNum == SEQ_NUM_MODULO) {
                     wait();
                 }
                 sendPacket(nextSeqNum);
@@ -92,7 +95,7 @@ public class Sender {
     }
 
     private void sendPacket(int index) throws IOException {
-        byte[] udpData = packets[index].getUDPdata();
+        byte[] udpData = packets[index + cycles * 32].getUDPdata();
         DatagramPacket datagramPacket = new DatagramPacket(udpData, udpData.length, address, portForData);
         this.dataDatagramSocket.send(datagramPacket);
         seqNumWriter.println(index);
@@ -108,9 +111,14 @@ public class Sender {
             synchronized (this) {
                 if (ackPacket.getSeqNum() >= base) {// discard duplicates
                     base = ackPacket.getSeqNum() + 1;
+                    if (ackPacket.getSeqNum() == SEQ_NUM_MODULO - 1) {
+                        this.cycles ++;
+                        base = 0;
+                        nextSeqNum = 0;
+                    }
                     System.out.println("Confirmed: " + ackPacket.getSeqNum());
                     ackWriter.println(ackPacket.getSeqNum());
-                    if (base == this.numberOfPackets) {
+                    if (base + cycles * SEQ_NUM_MODULO == this.numberOfPackets) {
                         break;
                     } else if (base == nextSeqNum) {
                         stopTimer();
@@ -123,7 +131,7 @@ public class Sender {
                 }
             }
         }
-        byte[] eotData = Packet.createEOT(numberOfPackets).getUDPdata();
+        byte[] eotData = Packet.createEOT(numberOfPackets % SEQ_NUM_MODULO).getUDPdata();
         this.dataDatagramSocket.send(new DatagramPacket(eotData, eotData.length, this.address, this.portForData));
         seqNumWriter.println(numberOfPackets);
         seqNumWriter.close();
@@ -135,17 +143,17 @@ public class Sender {
     }
 
     private Packet[] createPackets(byte[] fileContent) throws Exception {
-        int numberOfWholePackets = fileContent.length / Packet.maxDataLength;
+        int numberOfWholePackets = fileContent.length / Packet.MAX_DATA_LENGTH;
         // length of last Packet might be smaller
-        int smallPacketLength =  fileContent.length % Packet.maxDataLength;
+        int smallPacketLength =  fileContent.length % Packet.MAX_DATA_LENGTH;
         this.numberOfPackets = numberOfWholePackets + (smallPacketLength > 0 ? 1 : 0);
         Packet[] packets = new Packet[numberOfPackets];
         int offset = 0;
         int i = 0;
         for (; i < numberOfWholePackets; i ++) {
-            String data = new String(Arrays.copyOfRange(fileContent, offset, offset + Packet.maxDataLength));
+            String data = new String(Arrays.copyOfRange(fileContent, offset, offset + Packet.MAX_DATA_LENGTH));
             packets[i] = Packet.createPacket(i, data);
-            offset += Packet.maxDataLength;
+            offset += Packet.MAX_DATA_LENGTH;
         }
         // handle the last small Packet
         if (smallPacketLength > 0) {
