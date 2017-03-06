@@ -113,7 +113,7 @@ public class Sender {
             }
         }
         byte[] eotData = Packet.createEOT(nextSeqNum).getUDPdata();
-        this.dataDatagramSocket.send(new DatagramPacket(eotData, eotData.length));
+        this.dataDatagramSocket.send(new DatagramPacket(eotData, eotData.length, this.address, this.portForData));
         seqNumWriter.println(nextSeqNum);
         seqNumWriter.close();
         ackWriter.close();
