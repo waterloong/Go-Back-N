@@ -50,7 +50,6 @@ public class Sender {
             }
         }).start();
 
-        this.startTimer();
         // send the data
         synchronized (this) {
             while (nextSeqNum < this.numberOfPackets) {
@@ -61,8 +60,8 @@ public class Sender {
                 if (base == nextSeqNum) {
                     stopTimer();
                     startTimer();
-                    nextSeqNum ++;
                 }
+                nextSeqNum ++;
             }
         }
     }
