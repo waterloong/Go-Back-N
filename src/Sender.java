@@ -55,7 +55,7 @@ public class Sender {
         this.startTimer();
         // send the data
         synchronized (this) {
-            while (nextSeqNum < this.numberOfPackets) {
+            while (nextSeqNum + cycles * SEQ_NUM_MODULO < this.numberOfPackets) {
                 //
                 while (nextSeqNum >= base + WINDOW_SIZE || nextSeqNum == SEQ_NUM_MODULO) {
                     wait();
@@ -98,7 +98,7 @@ public class Sender {
         byte[] udpData = packets[index + cycles * 32].getUDPdata();
         DatagramPacket datagramPacket = new DatagramPacket(udpData, udpData.length, address, portForData);
         this.dataDatagramSocket.send(datagramPacket);
-        seqNumWriter.println(index);
+        seqNumWriter.println(index + cycles * 32);
         System.out.println("Sending " + index);
     }
 
