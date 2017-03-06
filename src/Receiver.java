@@ -1,4 +1,3 @@
-import java.io.File;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -9,7 +8,9 @@ import java.net.InetAddress;
  */
 public class Receiver {
 
-    private PrintWriter logWriter = new PrintWriter(new File("arrival.log"));
+    private PrintWriter logWriter = new PrintWriter("arrival.log");
+    private PrintWriter fileWriter;
+//    private StringBuilder fileBuffer = new StringBuilder();
     private final InetAddress address;
     private final int portForAck;
     private int expectedSeqNum = 0;
@@ -17,6 +18,7 @@ public class Receiver {
     private DatagramSocket dataDatagramSocket;
 
     public Receiver(InetAddress address, int portForAck, int portForData, String fileName) throws Exception {
+        this.fileWriter = new PrintWriter(fileName);
         this.dataDatagramSocket = new DatagramSocket(portForData);
         this.address = address;
         this.portForAck = portForAck;
@@ -26,17 +28,21 @@ public class Receiver {
             byte[] rawData = new byte[512];
             DatagramPacket datagramPacket = new DatagramPacket(rawData, 512);
             dataDatagramSocket.receive(datagramPacket);
-            Packet dataPacket = Packet.parseUDPdata(datagramPacket.getData());
+            Packet packet = Packet.parseUDPdata(datagramPacket.getData());
+
             // EOT packet, we are done
-            if (dataPacket.getType() == 2) {
+            if (packet.getType() == 2) {
                 logWriter.close();
+                fileWriter.close();
                 break;
             }
-            int seqNum = dataPacket.getSeqNum();
+            int seqNum = packet.getSeqNum();
             logWriter.println(seqNum);
             if (expectedSeqNum == seqNum) {
                 expectedSeqNum ++;
                 sendAck(seqNum);
+                byte[] data = packet.getData();
+                fileWriter.print(new String(data));
             } else {
                 // wrong seq num, resend last correct ack
                 sendAck(expectedSeqNum - 1);

@@ -2,7 +2,7 @@ Assignment 2
 ===============
 Simply run make then the bash scripts to execute the programs.
 
-The program is tested on machine 002, 008, 010, 012 at cs environment.
+The program is tested on machine 004, 006, 008 as host1, 2, 3 at cs environment.
 
 The version of make on these machines is 3.81.
 
