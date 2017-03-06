@@ -1,3 +1,4 @@
+import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -9,7 +10,7 @@ import java.net.InetAddress;
 public class Receiver {
 
     private PrintWriter logWriter = new PrintWriter("arrival.log");
-    private PrintWriter fileWriter;
+    private FileOutputStream fileWriter;
 //    private StringBuilder fileBuffer = new StringBuilder();
     private final InetAddress address;
     private final int portForAck;
@@ -18,7 +19,7 @@ public class Receiver {
     private DatagramSocket dataDatagramSocket;
 
     public Receiver(InetAddress address, int portForAck, int portForData, String fileName) throws Exception {
-        this.fileWriter = new PrintWriter(fileName);
+        this.fileWriter = new FileOutputStream(fileName);
         this.dataDatagramSocket = new DatagramSocket(portForData);
         this.address = address;
         this.portForAck = portForAck;
@@ -41,8 +42,7 @@ public class Receiver {
             if (expectedSeqNum == seqNum) {
                 expectedSeqNum ++;
                 sendAck(seqNum);
-                byte[] data = packet.getData();
-                fileWriter.print(new String(data));
+                fileWriter.write(packet.getData());
             } else {
                 // wrong seq num, resend last correct ack
                 sendAck(expectedSeqNum - 1);
