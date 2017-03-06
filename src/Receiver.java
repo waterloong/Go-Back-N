@@ -58,6 +58,7 @@ public class Receiver {
         byte[] data = packet.getData();
         DatagramPacket datagramPacket = new DatagramPacket(data, data.length, address, portForAck);
         ackDatagramSocket.send(datagramPacket);
+        System.out.println("sent ack: " + seqNum);
     }
 
     /**
