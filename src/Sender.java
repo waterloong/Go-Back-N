@@ -106,7 +106,7 @@ public class Sender {
             Packet ackPacket = Packet.parseUDPdata(datagramPacket.getData());
             synchronized (this) {
                 if (ackPacket.getSeqNum() > base) {// discard duplicates
-                    base = ackPacket.getSeqNum();
+                    base = ackPacket.getSeqNum() + 1;
                     System.out.println("Confirmed: " + base);
                     ackWriter.println(base);
                     if (base == this.numberOfPackets - 1) {
