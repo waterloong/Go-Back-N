@@ -114,9 +114,9 @@ public class Sender {
                         break;
                     } else if (base == nextSeqNum) {
                         stopTimer();
-                        startTimer();
                     } else {
                         stopTimer();
+                        startTimer();
                     }
                     // to let thread sending data know that new "blue" seq numbers are available
                     notify();
