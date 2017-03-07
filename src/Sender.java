@@ -14,16 +14,15 @@ import java.util.*;
 public class Sender {
 
     public static final int SEQ_NUM_MODULO = Packet.SEQ_NUM_MODULO;
-    private PrintWriter seqNumWriter = new PrintWriter("seqnum.log");
-    private PrintWriter ackWriter = new PrintWriter("ack.log");
 
     private static final int WINDOW_SIZE = 10;
     private static final int TIME_OUT = 1000; // magic number
     private int numberOfPackets;
     private volatile int base = 0;
     private volatile int nextSeqNum = 0;
-    private volatile int cycles = 0;
-    private Timer timer = new Timer(); // cannot be daemon because it creates new timer
+    private volatile int cycles = 0; // number times sequence number go over 32
+    // cannot be daemon because it creates new timer, thus program need to call exit explicitly
+    private Timer timer = new Timer();
 
     private InetAddress address;
     private int portForData;
@@ -31,6 +30,9 @@ public class Sender {
     private DatagramSocket ackDatagramSocket;
     private DatagramSocket dataDatagramSocket;
     private List<Packet> packets = new ArrayList<>();
+
+    private PrintWriter seqNumWriter = new PrintWriter("seqnum.log");
+    private PrintWriter ackWriter = new PrintWriter("ack.log");
 
     public Sender(InetAddress address, int portForData, int portForAck, String fileName) throws Exception {
         this.dataDatagramSocket = new DatagramSocket(0);
@@ -79,7 +81,6 @@ public class Sender {
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("time out");
                 for (int i = base; i < nextSeqNum; i ++) {
                     try {
                         Sender.this.sendPacket(i);
@@ -98,7 +99,6 @@ public class Sender {
         DatagramPacket datagramPacket = new DatagramPacket(udpData, udpData.length, address, portForData);
         this.dataDatagramSocket.send(datagramPacket);
         seqNumWriter.println(index + cycles * 32);
-        System.out.println("Sending " + index);
     }
 
     private void waitForAck() throws Exception {
@@ -115,7 +115,6 @@ public class Sender {
                         base = 0;
                         nextSeqNum = 0;
                     }
-                    System.out.println("Confirmed: " + ackPacket.getSeqNum());
                     ackWriter.println(ackPacket.getSeqNum());
                     if (base + cycles * SEQ_NUM_MODULO == this.numberOfPackets) {
                         break;
@@ -130,7 +129,6 @@ public class Sender {
                 }
             }
         }
-        System.out.println("Sending EOT");
 
         byte[] eotData = Packet.createEOT(numberOfPackets % SEQ_NUM_MODULO).getUDPdata();
         this.dataDatagramSocket.send(new DatagramPacket(eotData, eotData.length, this.address, this.portForData));

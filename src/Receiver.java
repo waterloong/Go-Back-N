@@ -3,7 +3,6 @@ import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Created by William on 2017-02-26.
@@ -34,21 +33,21 @@ public class Receiver {
             Packet packet = Packet.parseUDPdata(datagramPacket.getData());
             int seqNum = packet.getSeqNum();
             logWriter.println(seqNum);
-            System.out.println("received: " + seqNum);
 
             // EOT Packet, we are done
             if (packet.getType() == 2) {
                 logWriter.close();
                 fileWriter.close();
-                System.out.println("EOT received");
                 sendEot((expectedSeqNum + 1) % SEQ_NUM_MODULO);
+                dataDatagramSocket.close();
+                ackDatagramSocket.close();
                 break;
             }
             if (expectedSeqNum == seqNum) {
-                expectedSeqNum = (expectedSeqNum + 1) % Packet.SEQ_NUM_MODULO;
+                expectedSeqNum = (expectedSeqNum + 1) % SEQ_NUM_MODULO;
                 sendAck(seqNum);
                 lastCorrectSeqNum = seqNum;
-                fileWriter.write(new String(packet.getData()).getBytes(StandardCharsets.UTF_8));
+                fileWriter.write(packet.getData());
             } else if (lastCorrectSeqNum > -1) { // send last correct ack iff it exists
                 //  // expectedSeqNum - 1 but also work for case of 0
                 sendAck(lastCorrectSeqNum);
@@ -62,7 +61,6 @@ public class Receiver {
         byte[] data = packet.getUDPdata();
         DatagramPacket datagramPacket = new DatagramPacket(data, data.length, address, portForAck);
         ackDatagramSocket.send(datagramPacket);
-        System.out.println("sent eot: " + seqNum);
     }
 
     private void sendAck(int seqNum) throws Exception {
@@ -70,7 +68,6 @@ public class Receiver {
         byte[] data = packet.getUDPdata();
         DatagramPacket datagramPacket = new DatagramPacket(data, data.length, address, portForAck);
         ackDatagramSocket.send(datagramPacket);
-        System.out.println("sent ack: " + seqNum);
     }
 
     /**
