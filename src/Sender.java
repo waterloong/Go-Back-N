@@ -59,6 +59,7 @@ public class Sender {
             while (nextSeqNum + cycles * SEQ_NUM_MODULO < this.numberOfPackets) {
                 //
                 while (nextSeqNum >= base + WINDOW_SIZE || nextSeqNum >= SEQ_NUM_MODULO) {
+                    // wait for previous packets to be acknowledged, so that new blues are available
                     wait();
                 }
                 sendPacket(nextSeqNum);
@@ -130,12 +131,15 @@ public class Sender {
             }
         }
 
+        // send EOT
         byte[] eotData = Packet.createEOT(numberOfPackets % SEQ_NUM_MODULO).getUDPdata();
         this.dataDatagramSocket.send(new DatagramPacket(eotData, eotData.length, this.address, this.portForData));
         seqNumWriter.println(numberOfPackets % SEQ_NUM_MODULO);
         seqNumWriter.close();
         ackWriter.close();
         dataDatagramSocket.close();
+
+        // receive EOT from receiver, only exit if this happens
         byte[] data = new byte[512];
         DatagramPacket datagramPacket = new DatagramPacket(data, 512);
         this.ackDatagramSocket.receive(datagramPacket);
